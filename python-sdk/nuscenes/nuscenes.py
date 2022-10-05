@@ -839,7 +839,8 @@ class NuScenesExplorer:
                                 show_lidarseg: bool = False,
                                 filter_lidarseg_labels: List = None,
                                 lidarseg_preds_bin_path: str = None,
-                                show_panoptic: bool = False) -> Tuple:
+                                show_panoptic: bool = False,
+                                keep_depths: bool = False) -> Tuple:
         """
         Given a point sensor (lidar/radar) token and camera sample_data token, load pointcloud and map it to the image
         plane.
@@ -855,6 +856,8 @@ class NuScenesExplorer:
         :param show_panoptic: When set to True, the lidar data is colored with the panoptic labels. When set
             to False, the colors of the lidar data represent the distance from the center of the ego vehicle.
             If show_lidarseg is True, show_panoptic will be set to False.
+        :param keep_depths: When set to True, the z value of the points will match the z value of the LiDAR
+            instead of the z value of the projection.
         :return (pointcloud <np.float: 2, n)>, coloring <np.float: n>, image <Image>).
         """
 
@@ -956,7 +959,8 @@ class NuScenesExplorer:
 
         # Take the actual picture (matrix multiplication with camera-matrix + renormalization).
         points = view_points(pc.points[:3, :], np.array(cs_record['camera_intrinsic']), normalize=True)
-
+        if keep_depths:
+            points[2, :] = depths
         # Remove points that are either outside or behind the camera. Leave a margin of 1 pixel for aesthetic reasons.
         # Also make sure points are at least 1m in front of the camera to avoid seeing the lidar points on the camera
         # casing for non-keyframes which are slightly out of sync.
